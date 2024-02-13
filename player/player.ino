@@ -10,7 +10,6 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 //id
 int id=1;
-int GGEZ=3;
 
 //button
 ezButton button1(4);

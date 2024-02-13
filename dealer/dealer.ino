@@ -115,6 +115,16 @@ void handlePlayerBetState();
 void handlePlayerPlayState();
 void handleDealerPlayState();
 
+void StateDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.print("State: ");
+  display.println(currentState);
+  display.display();
+}
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -159,6 +169,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  StateDisplay();
   switch(currentState) {
     case 0:
       handlePlayerReadyState();
