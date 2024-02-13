@@ -39,7 +39,8 @@ typedef struct game_state_message {
 typedef struct dealer_message {
   char message[32]; //message
   int player_state;  //state number 0 = init , 1=bet , 2 = playing, 3 = waiting
-  int player_result; //result number 0 = lose, 1 = win, 2 = draw
+  int player1_result; //result number 0 = lose, 1 = win, 2 = draw
+  int player2_result; //result number 0 = lose, 1 = win, 2 = draw
   int player1_card[5];
   int player2_card[5];
   int dealer_card[5];
