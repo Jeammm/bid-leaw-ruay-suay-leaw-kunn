@@ -7,11 +7,11 @@
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
 
-int currentState = 0,
+int currentState = 0;
 
 //MAC Address
-uint8_t broadcastAddress1[] = {0x3C,0x71,0xBF,0x10,0x5C,0x3C};
-uint8_t broadcastAddress2[] = {0x3C,0x61,0x05,0x04,0x3F,0x18};
+uint8_t broadcastAddress1[] = {0x3C,0x71,0xBF,0x10,0x5C,0x3C} ;
+uint8_t broadcastAddress2[] = {0x3C,0x61,0x05,0x04,0x3F,0x18} ;
 
 esp_now_peer_info_t peerInfo;
 
@@ -74,9 +74,9 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   else if (gameStateMessage.state == 2) {
     if(gameStateMessage.hit) {
       if(gameStateMessage.id == 1) {
-        dealer_message.player1_card[player1_count++] = random(1,14);
+        dealerMessage.player1_card[player1_count++] = random(1,14);
       }  else {
-        dealer_message.player2_card[player2_count++] = random(1,14);
+        dealerMessage.player2_card[player2_count++] = random(1,14);
       }
     } else {
       if(gameStateMessage.id == 1) {
@@ -194,6 +194,10 @@ void handlePlayerBetState() {
   }
 }
 
-void handlePlayerPlayState();
-void handleDealerPlayState();
+void handlePlayerPlayState() {
+
+}
+void handleDealerPlayState() {
+  
+}
 

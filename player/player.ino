@@ -415,7 +415,7 @@ void handlePlayerPlayingState() {
     Serial.println("You Pick Hit!");
     gameStateMessage.state=currentState;
     gameStateMessage.id=id;
-    hitMessage.hit=true;
+    gameStateMessage.hit=true;
     pickStand=false;
     SendStateToDealer();
   }
@@ -423,7 +423,7 @@ void handlePlayerPlayingState() {
     Serial.println("You Pick Stand!");
     gameStateMessage.state=currentState;
     gameStateMessage.id=id;
-    hitMessage.hit=false;
+    gameStateMessage.hit=false;
     pickStand=true;
     SendStateToDealer();
   }
