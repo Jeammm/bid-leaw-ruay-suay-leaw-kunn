@@ -51,11 +51,25 @@ esp_now_peer_info_t peerInfo;
 //Start display
 void InitDisplay(){
   display.clearDisplay();
-  display.setTextSize(2);
+  display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println("Press button to start");
+  display.setCursor(15,8);
+  display.println("Press any button"); 
+  display.setCursor(35,16);
+  display.println("to start");
   display.display();
+}
+
+void MyCardDisplay() {
+  for (int i; i < 5; i++) {
+    if (id == 1 && dealerMessage.player1_card[i] != 0) {
+      display.print(dealerMessage.player1_card[i]);
+    } else if (id == 2 && dealerMessage.player2_card[i] != 0){
+      display.print(dealerMessage.player2_card[i]);
+    }
+    display.print(" ");
+  }
+  display.println("");
 }
 
 void WaitingForJoinDisplay(){
@@ -89,7 +103,11 @@ void DecisionDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
+  
   display.setCursor(0,0);
+  MyCardDisplay();
+
+  display.setCursor(0,8);
   display.println("Hit or Stand ?");
   display.display();
 }
@@ -98,7 +116,11 @@ void StandPickedDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
+
   display.setCursor(0,0);
+  MyCardDisplay();
+
+  display.setCursor(0,8);
   display.println("You picked Stand");
   display.display();
 }
@@ -203,7 +225,7 @@ void loop () {
 void handlePlayerIdleState() {
   if(!isReady) {
     InitDisplay();
-    if(button1.isPressed()){ //press to ready
+    if(button1.isPressed() || button2.isPressed()){ //press to ready
       Serial.println("state 0 button pressed");
       gameStateMessage.state = currentState;
       gameStateMessage.id=id;
