@@ -9,7 +9,7 @@
 Adafruit_SSD1306 display(OLED_RESET);
 
 //id
-int id=1;
+int id=2;
 
 //button
 ezButton button1(4);
@@ -23,6 +23,7 @@ uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 bool isReady = false;
 bool betPlaced = false;
 bool pickStand = false;
+int cardCount = 2;
 
 typedef struct game_state_message {
   int state;
@@ -62,10 +63,23 @@ void InitDisplay(){
 
 void MyCardDisplay() {
   for (int i; i < 5; i++) {
-    if (id == 1 && dealerMessage.player1_card[i] != 0) {
-      display.print(dealerMessage.player1_card[i]);
-    } else if (id == 2 && dealerMessage.player2_card[i] != 0){
-      display.print(dealerMessage.player2_card[i]);
+    int myCard;
+    if (id == 1) {
+      myCard = dealerMessage.player1_card[i];
+    } else {
+      myCard = dealerMessage.player2_card[i];
+    }
+
+    if (myCard == 1) {
+      display.print("A"); 
+    } else if (myCard <= 10) {
+      display.print(myCard); 
+    } else if (myCard == 11) {
+      display.print("J"); 
+    } else if (myCard == 12) {
+      display.print("Q"); 
+    } else if (myCard == 13) {
+      display.print("K"); 
     }
     display.print(" ");
   }
@@ -130,17 +144,35 @@ void GameResultDisplay() {
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
+  MyCardDisplay();
 
-  switch(dealerMessage.player1_result) {
-    case 0:
-      display.println("You Lose");
-      break;
-    case 1:
-      display.println("You Win");
-      break;
-    case 2:
-      display.println("You Draw");
-      break;
+  display.setTextSize(2);
+  display.setCursor(0,8);
+  if (id == 1) {
+    switch(dealerMessage.player1_result) {
+      case 0:
+        display.println("You Lose");
+        break;
+      case 1:
+        display.println("You Win");
+        break;
+      case 2:
+        display.println("You Draw");
+        break;
+    }
+  } else {
+    switch(dealerMessage.player2_result) {
+      case 0:
+        display.println("You Lose");
+        break;
+      case 1:
+        display.println("You Win");
+        break;
+      case 2:
+        display.println("You Draw");
+        break;
+    }
+
   }
   display.display();
 }
@@ -149,6 +181,9 @@ void GameResultDisplay() {
 void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
   memcpy(&dealerMessage, incomingData, sizeof(dealerMessage));
   currentState = dealerMessage.player_state;
+  if (dealerMessage.player_state == 0) {
+    ResetGame();
+  }
 }
 
 void handlePlayerIdleState();
@@ -170,9 +205,19 @@ void SendStateToDealer() {
   return;
 }
 
+void ResetGame() {
+  isReady = false;
+  betPlaced = false;
+  pickStand = false;
+  cardCount = 2;
+  gameStateMessage.state = 0;
+  gameStateMessage.bet_amount = 100;
+  gameStateMessage.hit = true;
+}
+
 void setup() {
-  button1.setDebounceTime(50); 
-  button2.setDebounceTime(50);
+  button1.setDebounceTime(400); 
+  button2.setDebounceTime(400);
 
   Serial.begin(115200);
 
@@ -261,8 +306,11 @@ void handlePlayerPlayingState() {
     gameStateMessage.state=currentState;
     gameStateMessage.id=id;
     gameStateMessage.hit=true;
-    pickStand=false;
     SendStateToDealer();
+    cardCount++;
+    if (cardCount == 5) {
+      pickStand=true;
+    }
   }
   else if(button2.isPressed()){ // if stand
     Serial.println("You Pick Stand!");
