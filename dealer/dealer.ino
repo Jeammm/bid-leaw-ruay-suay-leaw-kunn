@@ -27,11 +27,14 @@ int player2_count = 0;
 bool player1_stand = false;
 bool player2_stand = false;
 
+int dealerSum = 0;
+int countCardDealer = 0;
+
 typedef struct game_state_message {
   int state;
   int id;
   char message[32];
-  bool is_ready;
+  bool is_ready; // use in init and bet state
   int bet_amount;
   bool hit;
 } game_state_message;
@@ -206,9 +209,26 @@ void handlePlayerBetState() {
 }
 
 void handlePlayerPlayState() {
-
+  if (player1_stand && player2_stand) {
+    currentState = 3;
+    SendStateToPlayer1();
+    SendStateToPlayer2();
+  }
 }
+
 void handleDealerPlayState() {
-  
+  while (dealerSum < 17 && countCardDealer < 5) {   //do once
+    dealerMessage.card[countCardDealer] = random(1,14);
+    for(int i=0; i<countCardDealer+1; i++) {
+      if(dealerMessage.card[i] > 10) {
+        dealerSum += 10;
+        continue;
+      }
+      dealerSum += dealerMessage.card[i];
+    }
+    countCardDealer++;
+  }
+
+
 }
 
