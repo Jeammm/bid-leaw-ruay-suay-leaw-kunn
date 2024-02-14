@@ -72,7 +72,7 @@ void MyCardDisplay() {
 
     if (myCard == 1) {
       display.print("A"); 
-    } else if (myCard <= 10) {
+    } else if (myCard <= 10 && myCard >= 2) {
       display.print(myCard); 
     } else if (myCard == 11) {
       display.print("J"); 
