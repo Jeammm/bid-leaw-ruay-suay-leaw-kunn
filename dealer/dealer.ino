@@ -16,6 +16,10 @@ uint8_t broadcastAddress2[] = {0x3C,0x61,0x05,0x04,0x3F,0x18} ;
 
 esp_now_peer_info_t peerInfo;
 
+const char* suits[]= { "Spades", "Hearts", "Diamonds", "Clubs" };
+
+const char* ranks[]= { "0", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+
 //game state variables
 bool player1_ready = false;
 bool player2_ready = false;
@@ -31,11 +35,17 @@ int player2_count = 0;
 bool player1_stand = false;
 bool player2_stand = false;
 
+int dealerSum = 0;
+int countCardDealer = 0;
+
+int player1Sum = 0;
+int player2Sum = 0;
+
 typedef struct game_state_message {
   int state;
   int id;
   char message[32];
-  bool is_ready;
+  bool is_ready; // use in init and bet state
   int bet_amount;
   bool hit;
 } game_state_message;
@@ -79,9 +89,9 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   } 
   else if (gameStateMessage.state == 2) {
     if(gameStateMessage.hit) {
-      if(gameStateMessage.id == 1) {
+      if(gameStateMessage.id == 1 && player1_count < 5) {
         dealerMessage.player1_card[player1_count++] = random(1,14);
-      }  else {
+      }  else if (gameStateMessage.id == 2 && player2_count < 5) {
         dealerMessage.player2_card[player2_count++] = random(1,14);
       }
     } else {
@@ -90,6 +100,12 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
       }  else {
         player2_stand = true;
       }
+    }
+    if(player1_count == 5) {
+      player1_stand = true;
+    }
+    if(player2_count == 5) {
+      player2_stand = true;
     }
   } else if (gameStateMessage.state == 3) {
     //
@@ -138,9 +154,10 @@ void WaitingForPlayerDisplay(){
   display.setTextSize(2);
   display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
-  display.print("Starting...");
+  display.print("Starting..");
   
   display.setTextSize(1);
+  display.setTextColor(WHITE);
 
   display.setCursor(5,16);
   display.print("Player 1");
@@ -170,6 +187,7 @@ void WaitingForBetsDisplay(){
   display.print("Bet Now!");
   
   display.setTextSize(1);
+  display.setTextColor(WHITE);
 
   display.setCursor(5,16);
   display.print("Player 1");
@@ -203,6 +221,54 @@ void StateDisplay(){
 
   IconDisplayTest();
 
+  display.display();
+
+  if(currentState == 0 || currentState == 1) {
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.print("State: ");
+    display.println(currentState);
+    display.display();
+  } else if (currentState == 2) {
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.print("Card: ");
+    display.println(ranks[dealerMessage.dealer_card[0]]);
+    display.display();
+  }
+  else {
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.print("Point: ");
+    display.println(dealerSum);
+    display.display();
+  }
+
+}
+
+void HitStandStateDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.print("Card: ");
+  display.println(ranks[dealerMessage.dealer_card[0]]);
+  display.display();
+}
+
+void DealerPlayDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.print("Point: ");
+  display.println(dealerSum);
   display.display();
 }
 
@@ -306,15 +372,107 @@ void handlePlayerBetState() {
   WaitingForBetsDisplay();
   if (player1_bet && player2_bet) {
     currentState = 2;
+    dealerMessage.player1_card[player1_count++] = random(1,14);
+    dealerMessage.player1_card[player1_count++] = random(1,14);
+    dealerMessage.player2_card[player2_count++] = random(1,14);
+    dealerMessage.player2_card[player2_count++] = random(1,14);
+    dealerMessage.dealer_card[countCardDealer++] = random(1,14);
+    if(dealerMessage.dealer_card[0] > 10) {
+      dealerSum += 10;
+    } else {
+      dealerSum += dealerMessage.dealer_card[0];
+    }
     SendStateToPlayer1();
     SendStateToPlayer2();
   }
 }
 
 void handlePlayerPlayState() {
-  
-}
-void handleDealerPlayState() {
-  
+  HitStandStateDisplay();
+  SendStateToPlayer1();
+  SendStateToPlayer2();
+  if (player1_stand && player2_stand) {
+    for(int i=0; i<5; i++) {
+      if(dealerMessage.player1_card[i] > 10) {
+        player1Sum += 10;
+      } 
+      else {
+        player1Sum += dealerMessage.player1_card[i];
+      }
+
+      if(dealerMessage.player2_card[i] > 10) {
+        player2Sum += 10;
+      }
+      else {
+        player2Sum += dealerMessage.player2_card[i];
+      }
+    }
+
+    while (dealerSum < 17 && countCardDealer < 5) {   //do once
+      dealerMessage.dealer_card[countCardDealer] = random(1,14);
+      if(dealerMessage.dealer_card[countCardDealer] > 10) {
+        dealerSum += 10;
+      } else {
+        dealerSum += dealerMessage.dealer_card[countCardDealer];
+      }
+      countCardDealer++;
+    }
+    Serial.print("Player 1: ");
+    Serial.println(player1Sum);
+    Serial.print("Player 2: ");
+    Serial.println(player2Sum);
+    Serial.print("Dealer: ");
+    Serial.println(dealerSum);
+
+    if(player1Sum > 21 || (player1Sum < dealerSum && dealerSum < 22)) {
+      dealerMessage.player1_result = 0;
+    } else if (player1Sum == dealerSum){
+      dealerMessage.player1_result = 2; // draw
+    } else {
+      dealerMessage.player1_result = 1;
+    }
+
+    if(player2Sum > 21 || (player2Sum < dealerSum && dealerSum < 22)) {
+      dealerMessage.player2_result = 0;
+    } else if (player2Sum == dealerSum){
+      dealerMessage.player2_result = 2; // draw
+    } else {
+      dealerMessage.player2_result = 1;
+    }
+
+    currentState = 3;
+    SendStateToPlayer1();
+    SendStateToPlayer2();
+  }
 }
 
+void handleDealerPlayState() {
+  DealerPlayDisplay();
+  delay(10000);
+  currentState = 0;
+  player1_ready = false;
+  player2_ready = false;
+  player1_bet = false;
+  player2_bet = false;
+
+  player1_count = 0;
+  player2_count = 0;
+
+  player1_stand = false;
+  player2_stand = false;
+
+  dealerSum = 0;
+  countCardDealer = 0;
+
+  player1Sum = 0;
+  player2Sum = 0;
+
+  dealerMessage.player_state = 0;  
+  dealerMessage.player1_result = 0; 
+  dealerMessage.player2_result = 0; 
+  memset(dealerMessage.player1_card, 0, sizeof(dealerMessage.player1_card));
+  memset(dealerMessage.player2_card, 0, sizeof(dealerMessage.player2_card));
+  memset(dealerMessage.dealer_card, 0, sizeof(dealerMessage.dealer_card));
+  SendStateToPlayer1();
+  SendStateToPlayer2();
+}
