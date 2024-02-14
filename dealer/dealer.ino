@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include "card_icon.h"
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -20,6 +21,9 @@ bool player1_ready = false;
 bool player2_ready = false;
 bool player1_bet = false;
 bool player2_bet = false;
+
+int player1_bet_amount = 0;
+int player2_bet_amount = 0;
 
 int player1_count = 0;
 int player2_count = 0;
@@ -67,8 +71,10 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   else if (gameStateMessage.state == 1) {
     if (gameStateMessage.id == 1) {
       player1_bet = gameStateMessage.is_ready;
+      player1_bet_amount = gameStateMessage.bet_amount;
     } else {
       player2_bet = gameStateMessage.is_ready;
+      player2_bet_amount = gameStateMessage.bet_amount;
     }
   } 
   else if (gameStateMessage.state == 2) {
@@ -115,6 +121,78 @@ void handlePlayerBetState();
 void handlePlayerPlayState();
 void handleDealerPlayState();
 
+void IdleDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(2,0);
+  display.print("BLACK JACK");
+
+  IconDisplayTest();
+
+  display.display();
+}
+
+void WaitingForPlayerDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Starting...");
+  
+  display.setTextSize(1);
+
+  display.setCursor(5,16);
+  display.print("Player 1");
+  display.setCursor(3,24);
+  if (player1_ready) {
+    display.print("Ready");
+  } else {
+    display.print("Not ready");
+  }
+  
+  display.setCursor(72,16);
+  display.print("Player 2");
+  display.setCursor(70,24);
+  if (player2_ready) {
+    display.print("Ready");
+  } else {
+    display.print("Not ready");
+  }
+  display.display();
+}
+
+void WaitingForBetsDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Bet Now!");
+  
+  display.setTextSize(1);
+
+  display.setCursor(5,16);
+  display.print("Player 1");
+  display.setCursor(3,24);
+  if (player1_bet) {
+    display.print(player1_bet_amount);
+    display.print(" C");
+  } else {
+    display.print("Not ready");
+  }
+  
+  display.setCursor(72,16);
+  display.print("Player 2");
+  display.setCursor(70,24);
+  if (player2_bet) {
+    display.print(player2_bet_amount);
+    display.print(" C");
+  } else {
+    display.print("Not ready");
+  }
+  display.display();
+}
+
 void StateDisplay(){
   display.clearDisplay();
   display.setTextSize(2);
@@ -122,7 +200,30 @@ void StateDisplay(){
   display.setCursor(0,0);
   display.print("State: ");
   display.println(currentState);
+
+  IconDisplayTest();
+
   display.display();
+}
+
+void IconDisplayTest() {
+  display.setTextColor(WHITE);
+  display.drawBitmap(
+    0,
+    17,
+    heart_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    36,
+    17,
+    spade_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    72,
+    17,
+    club_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    108,
+    17,
+    diamond_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
 }
 
 void setup() {
@@ -169,7 +270,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  StateDisplay();
+  // StateDisplay();
   switch(currentState) {
     case 0:
       handlePlayerReadyState();
@@ -188,7 +289,11 @@ void loop() {
 
 void handlePlayerReadyState() {
   // Your code for handling player ready state
-  
+  if (player1_ready || player2_ready) {
+    WaitingForPlayerDisplay();
+  } else {
+    IdleDisplay();
+  }
   // Change state when conditions are met
   if (player1_ready && player2_ready) {
     currentState = 1;
@@ -198,6 +303,7 @@ void handlePlayerReadyState() {
 }
 
 void handlePlayerBetState() {
+  WaitingForBetsDisplay();
   if (player1_bet && player2_bet) {
     currentState = 2;
     SendStateToPlayer1();
@@ -206,7 +312,7 @@ void handlePlayerBetState() {
 }
 
 void handlePlayerPlayState() {
-
+  
 }
 void handleDealerPlayState() {
   
