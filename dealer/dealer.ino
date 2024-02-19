@@ -5,6 +5,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "card_icon.h"
+#include "card_printer.h"
+
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -137,160 +139,12 @@ void handlePlayerBetState();
 void handlePlayerPlayState();
 void handleDealerPlayState();
 
-void IdleDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(2,0);
-  display.print("BLACK JACK");
-
-  IconDisplayTest();
-
-  display.display();
-}
-
-void WaitingForPlayerDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(0,0);
-  display.print("Starting..");
-  
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-
-  display.setCursor(5,16);
-  display.print("Player 1");
-  display.setCursor(3,24);
-  if (player1_ready) {
-    display.print("Ready");
-  } else {
-    display.print("Not ready");
-  }
-  
-  display.setCursor(72,16);
-  display.print("Player 2");
-  display.setCursor(70,24);
-  if (player2_ready) {
-    display.print("Ready");
-  } else {
-    display.print("Not ready");
-  }
-  display.display();
-}
-
-void WaitingForBetsDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(0,0);
-  display.print("Bet Now!");
-  
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-
-  display.setCursor(5,16);
-  display.print("Player 1");
-  display.setCursor(3,24);
-  if (player1_bet) {
-    display.print(player1_bet_amount);
-    display.print(" C");
-  } else {
-    display.print("Not ready");
-  }
-  
-  display.setCursor(72,16);
-  display.print("Player 2");
-  display.setCursor(70,24);
-  if (player2_bet) {
-    display.print(player2_bet_amount);
-    display.print(" C");
-  } else {
-    display.print("Not ready");
-  }
-  display.display();
-}
-
-void StateDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.print("State: ");
-  display.println(currentState);
-
-  IconDisplayTest();
-
-  display.display();
-
-  if(currentState == 0 || currentState == 1) {
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(0,0);
-    display.print("State: ");
-    display.println(currentState);
-    display.display();
-  } else if (currentState == 2) {
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(0,0);
-    display.print("Card: ");
-    display.println(ranks[dealerMessage.dealer_card[0]]);
-    display.display();
-  }
-  else {
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(0,0);
-    display.print("Point: ");
-    display.println(dealerSum);
-    display.display();
-  }
-
-}
-
-void HitStandStateDisplay() {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.print("Card: ");
-  display.println(ranks[dealerMessage.dealer_card[0]]);
-  display.display();
-}
-
-void DealerPlayDisplay() {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.print("Point: ");
-  display.println(dealerSum);
-  display.display();
-}
-
-void IconDisplayTest() {
-  display.setTextColor(WHITE);
-  display.drawBitmap(
-    0,
-    17,
-    heart_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  display.drawBitmap(
-    36,
-    17,
-    spade_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  display.drawBitmap(
-    72,
-    17,
-    club_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  display.drawBitmap(
-    108,
-    17,
-    diamond_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-}
+void IdleDisplay();
+void IconDisplayTest();
+void WaitingForPlayerDisplay();
+void WaitingForBetsDisplay();
+void DealerCardDisplay();
+void DealerPlayDisplay();
 
 void setup() {
   // put your setup code here, to run once:
@@ -353,6 +207,135 @@ void loop() {
     }
 }
 
+void IdleDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("          ");
+
+  display.setCursor(2,0);
+  display.print("BLACK JACK");
+
+  IconDisplayTest();
+
+  display.display();
+}
+
+void IconDisplayTest() {
+  display.setTextColor(WHITE);
+  display.drawBitmap(
+    8,
+    17,
+    heart_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    40,
+    17,
+    spade_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    72,
+    17,
+    club_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap(
+    104,
+    17,
+    diamond_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+}
+
+void WaitingForPlayerDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Starting..");
+  
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+  display.setCursor(5,16);
+  display.print("Player 1");
+  display.setCursor(3,24);
+  if (player1_ready) {
+    display.print("Ready");
+  } else {
+    display.print("Not ready");
+  }
+  
+  display.setCursor(72,16);
+  display.print("Player 2");
+  display.setCursor(70,24);
+  if (player2_ready) {
+    display.print("Ready");
+  } else {
+    display.print("Not ready");
+  }
+  display.display();
+}
+
+void WaitingForBetsDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("          ");
+
+  display.setCursor(15,0);
+  display.print("Bet Now!");
+  
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+  display.setCursor(5,16);
+  display.print("Player 1");
+  display.setCursor(3,24);
+  if (player1_bet) {
+    display.print(player1_bet_amount);
+    display.print(" C");
+  } else {
+    display.print("Not ready");
+  }
+  
+  display.setCursor(72,16);
+  display.print("Player 2");
+  display.setCursor(70,24);
+  if (player2_bet) {
+    display.print(player2_bet_amount);
+    display.print(" C");
+  } else {
+    display.print("Not ready");
+  }
+  display.display();
+}
+
+void DealerCardDisplay() {
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+
+  for (int i = 0; i < 4; i++) {
+    print_card_no(dealerMessage.dealer_card[i], i%3, i); // card_value, card_icon, card_no
+  }
+
+  display.setCursor(26, 24);
+  display.println("HIT or STAND ?");
+  display.display();
+}
+
+void DealerPlayDisplay() {
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+
+  for (int i = 0; i < 4; i++) {
+    print_card_no(dealerMessage.dealer_card[i], i%3, i); // card_value, card_icon, card_no
+  }
+
+  display.setCursor(26, 24);
+  display.print("Point: ");
+  display.println(dealerSum);
+  display.display();
+}
+
 void handlePlayerReadyState() {
   // Your code for handling player ready state
   if (player1_ready || player2_ready) {
@@ -388,7 +371,7 @@ void handlePlayerBetState() {
 }
 
 void handlePlayerPlayState() {
-  HitStandStateDisplay();
+  DealerCardDisplay();
   SendStateToPlayer1();
   SendStateToPlayer2();
   if (player1_stand && player2_stand) {
