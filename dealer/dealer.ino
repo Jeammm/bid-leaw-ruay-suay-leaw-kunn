@@ -50,6 +50,7 @@ typedef struct game_state_message {
   bool is_ready; // use in init and bet state
   int bet_amount;
   bool hit;
+  int WithdrawCredit;
 } game_state_message;
 
 typedef struct dealer_message {
@@ -60,6 +61,8 @@ typedef struct dealer_message {
   int player1_card[5];
   int player2_card[5];
   int dealer_card[5];
+  int FromWho; //if 0 = Dealer, 1 = Coin master 
+  int DepositCredit;
 } dealer_message;
 
 game_state_message gameStateMessage;

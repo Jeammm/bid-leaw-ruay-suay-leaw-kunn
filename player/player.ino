@@ -19,13 +19,15 @@ ezButton button2(5);
 int currentState = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
-
+uint8_t Coin1MacAddress[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
+uint8_t Coin2MacAddress[] = {0x24, 0x6F, 0x28, 0x50, 0xA6, 0x78};
 uint8_t player1MacAddress[] = {0x3C, 0x71, 0xBF, 0x10, 0x5C, 0x3C};
 
 bool isReady = false;
 bool betPlaced = false;
 bool pickStand = false;
 int cardCount = 2;
+int MyCredit = 0;
 
 typedef struct game_state_message {
   int state;
@@ -34,6 +36,7 @@ typedef struct game_state_message {
   bool is_ready;
   int bet_amount;
   bool hit;
+  int WithdrawCredit;
 } game_state_message;
 
 typedef struct dealer_message {
@@ -44,6 +47,8 @@ typedef struct dealer_message {
   int player1_card[5];
   int player2_card[5];
   int dealer_card[5];
+  int FromWho; //if 0 = Dealer, 1 = Coin master 
+  int DepositCredit;
 } dealer_message;
 
 game_state_message gameStateMessage;
@@ -56,10 +61,14 @@ void InitDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(15,8);
-  display.println("Press any button"); 
-  display.setCursor(35,16);
-  display.println("to start");
+  display.setCursor(5,0);
+  display.println("Press letf button if ready"); 
+  display.setCursor(0,8);
+  display.println("Press right button if withdraw");
+  display.setCursor(20,16);
+  display.print("Credit: ");
+  display.print(MyCredit);
+  display.print(" C");
   display.display();
 }
 
@@ -186,6 +195,10 @@ void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
   if (dealerMessage.player_state == 0) {
     ResetGame();
   }
+  if (dealerMessage.FromWho == 1) {
+    MyCredit += dealerMessage.DepositCredit;
+    Serial.println("deposit 100 credit");
+  }
 }
 
 void handlePlayerIdleState();
@@ -203,6 +216,24 @@ void SendStateToDealer() {
   while(result != ESP_OK)
   {
     result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  }
+  return;
+}
+
+void SendWithdrawToCoinMaster1() {
+  esp_err_t result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  while(result != ESP_OK)
+  {
+    result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  }
+  return;
+}
+
+void SendWithdrawToCoinMaster2() {
+  esp_err_t result = esp_now_send(Coin2MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  while(result != ESP_OK)
+  {
+    result = esp_now_send(Coin2MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   }
   return;
 }
@@ -283,7 +314,7 @@ void loop () {
 void handlePlayerIdleState() {
   if(!isReady) {
     InitDisplay();
-    if(button1.isPressed() || button2.isPressed()){ //press to ready
+    if(button1.isPressed()){ //press to ready
       Serial.println("state 0 button pressed");
       gameStateMessage.state = currentState;
       gameStateMessage.id=id;
@@ -291,6 +322,16 @@ void handlePlayerIdleState() {
       isReady = true;
       SendStateToDealer();
     }
+  } else if (button2.isPressed()){
+      Serial.println("Withdraw all credit");
+      gameStateMessage.WithdrawCredit = MyCredit;
+      MyCredit = 0;
+      gameStateMessage.id=id;
+      if(id == 1) {
+        SendWithdrawToCoinMaster1();
+      } else {
+        SendWithdrawToCoinMaster2();
+      }
   } else {
     WaitingForJoinDisplay();
   }
