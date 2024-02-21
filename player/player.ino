@@ -5,6 +5,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ezButton.h>
+#include "card_icon.h"
+#include "card_printer.h"
+
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -69,66 +72,106 @@ void InitDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(5,0);
-  display.println("Letf to Ready"); 
-  display.setCursor(0,8);
-  display.println("Right to Withdraw");
-  display.setCursor(25,16);
+
+  display.setCursor(24,0);
   display.print("Credit: ");
   display.print(MyCredit);
-  display.print(" C");
+  display.println(" C");
+
+  display.setCursor(0,14);
+  display.println("<<<<<");
+  display.setCursor(0,22);
+  display.println("Ready");
+
+  display.setCursor(95,14);
+  display.println(">>>>>");
+  display.setCursor(95,22);
+  display.println("Leave");
+
+  display.setTextSize(3);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(36, 8);
+  display.println("   ");
+
+  display.setCursor(45, 9);
+  if (id == 1) {
+    display.println("P1");
+  } else {
+    display.println("P2");
+  }
+
   display.display();
 }
 
 void MyCardDisplay() {
-  for (int i; i < 5; i++) {
-    int myCard;
-    if (id == 1) {
-      myCard = dealerMessage.player1_card[i];
-    } else {
-      myCard = dealerMessage.player2_card[i];
-    }
 
-    if (myCard == 1) {
-      display.print("A"); 
-    } else if (myCard <= 10 && myCard >= 2) {
-      display.print(myCard); 
-    } else if (myCard == 11) {
-      display.print("J"); 
-    } else if (myCard == 12) {
-      display.print("Q"); 
-    } else if (myCard == 13) {
-      display.print("K"); 
+  if (id == 1) {
+    for (int i = 0; i < 5; i++) {
+      print_card_no(dealerMessage.player1_card[i], i%3, i); // card_value, card_icon, card_no
     }
-    display.print(" ");
+  } else {
+    for (int i = 0; i < 5; i++) {
+      print_card_no(dealerMessage.player2_card[i], i%3, i); // card_value, card_icon, card_no
+    }
   }
-  display.println("");
 }
 
 void WaitingForJoinDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println("Waiting for others to join");
-  display.setCursor(25,16);
+
+  display.setCursor(24,0);
   display.print("Credit: ");
   display.print(MyCredit);
-  display.print(" C");
+  display.println(" C");
+
+  display.setCursor(15,10);
+  display.print("Waiting For P");
+  if (id == 1) {
+    display.print(2);
+  } else {
+    display.print(1);
+  }
+  display.println("...");
+
   display.display();
 }
 
 void PlaceYourBetDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+
+  display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
+  display.println("                     ");
+
+  display.setCursor(15,0);
   display.println("Place your bet");
-  display.setCursor(25,16);
-  display.print("Credit: ");
-  display.print(MyCredit);
+
+  display.setTextColor(WHITE);
+  
+  display.setCursor(0,8);
+  display.print("Remaining");
+  display.setCursor(73,8);
+  display.print(": ");
+  display.print(MyCredit - bet_amount);
   display.println(" C");
-  display.println(bet_amount);
+
+  display.setCursor(0,16);
+  display.print("Bet amount");
+  display.setCursor(73,16);
+  display.print(": ");
+  display.print(bet_amount);
+  display.println(" C");
+
+  display.setCursor(0,24);
+  display.print("Total Prize");
+  display.setCursor(73,24);
+  display.print(": ");
+  display.print(bet_amount * 2);
+  display.println(" C");
+
   display.display();
 }
 
@@ -136,46 +179,56 @@ void WaitingForOthersBetDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println("Waiting for others betting");
+
+  display.setCursor(18,0);
+  display.print("Your bet : ");
+  display.print(bet_amount);
+  display.println(" C");
+
+  display.setCursor(15,10);
+  display.print("Waiting For P");
+  if (id == 1) {
+    display.print(2);
+  } else {
+    display.print(1);
+  }
+  display.println("...");
+
   display.display();
 }
 
 void DecisionDisplay(){
   display.clearDisplay();
-  display.setTextSize(1);
   display.setTextColor(WHITE);
-  
-  display.setCursor(0,0);
+
   MyCardDisplay();
 
-  display.setCursor(0,8);
-  display.println("Hit or Stand ?");
+  display.setTextSize(1);
+  display.setCursor(26,24);
+  display.println("HIT or STAND ?");
   display.display();
 }
 
 void StandPickedDisplay(){
   display.clearDisplay();
-  display.setTextSize(1);
   display.setTextColor(WHITE);
 
-  display.setCursor(0,0);
   MyCardDisplay();
 
-  display.setCursor(0,8);
-  display.println("You picked Stand");
+  display.setTextSize(1);
+  display.setCursor(17,24);
+  display.println("YOU PICKED STAND");
   display.display();
 }
 
 void GameResultDisplay() {
   display.clearDisplay();
-  display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
+
   MyCardDisplay();
 
-  display.setTextSize(2);
-  display.setCursor(0,8);
+  display.setTextSize(1);
+  display.setCursor(26, 24);
   if (id == 1) {
     switch(dealerMessage.player1_result) {
       case 0:
@@ -410,6 +463,8 @@ void handlePlayerPlaceBetState() {
     }else if (potValue <= 4096){
       bet_amount = MyCredit;
     }
+
+    bet_amount = bet_amount - (bet_amount % 100);
 
     if(button1.isPressed()){ // press to place bet
       Serial.println("state 1 button pressed");
