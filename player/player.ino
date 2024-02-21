@@ -111,6 +111,10 @@ void WaitingForJoinDisplay(){
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println("Waiting for others to join");
+  display.setCursor(25,16);
+  display.print("Credit: ");
+  display.print(MyCredit);
+  display.print(" C");
   display.display();
 }
 
@@ -120,6 +124,10 @@ void PlaceYourBetDisplay(){
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println("Place your bet");
+  display.setCursor(25,16);
+  display.print("Credit: ");
+  display.print(MyCredit);
+  display.println(" C");
   display.println(bet_amount);
   display.display();
 }
