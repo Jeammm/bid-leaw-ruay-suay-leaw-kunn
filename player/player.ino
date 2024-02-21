@@ -35,7 +35,6 @@ bool isReady = false;
 bool betPlaced = false;
 bool pickStand = false;
 int cardCount = 2;
-int MyCredit = 0;
 
 typedef struct game_state_message {
   int state;
@@ -428,10 +427,10 @@ void handleDealerPlayState() {
   if (id == 1) {
     switch(dealerMessage.player1_result) {
       case 0:
-        MyCredit = MyCredit - bet_amount
+        MyCredit = MyCredit - bet_amount;
         break;
       case 1:
-        MyCredit = MyCredit + bet_amount
+        MyCredit = MyCredit + bet_amount;
         break;
       case 2:
         break;
@@ -439,10 +438,10 @@ void handleDealerPlayState() {
   } else {
     switch(dealerMessage.player2_result) {
       case 0:
-        MyCredit = MyCredit - bet_amount
+        MyCredit = MyCredit - bet_amount;
         break;
       case 1:
-        MyCredit = MyCredit + bet_amount
+        MyCredit = MyCredit + bet_amount;
         break;
       case 2:
         break;
