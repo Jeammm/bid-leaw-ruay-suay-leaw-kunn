@@ -17,6 +17,7 @@ ezButton button2(5);
 
 //variables
 int currentState = 0;
+int gameEnded = false;
 
 //pot value
 const int potPin = 35;
@@ -207,13 +208,41 @@ void GameResultDisplay() {
 //State recieve from dealer
 void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
   memcpy(&dealerMessage, incomingData, sizeof(dealerMessage));
-  currentState = dealerMessage.player_state;
-  if (dealerMessage.player_state == 0) {
-    ResetGame();
-  }
   if (dealerMessage.FromWho == 1) {
     MyCredit += dealerMessage.DepositCredit;
     Serial.println("deposit 100 credit");
+  } else {
+    currentState = dealerMessage.player_state;
+    if (dealerMessage.player_state == 0) {
+      ResetGame();
+    } else if (dealerMessage.player_state == 3) {
+      Serial.println(MyCredit);
+      Serial.println(bet_amount);
+      Serial.println(MyCredit + bet_amount);
+      if (id == 1) {
+        switch(dealerMessage.player1_result) {
+          case 0:
+            MyCredit = MyCredit - bet_amount;
+            break;
+          case 1:
+            MyCredit = MyCredit + bet_amount;
+            break;
+          case 2:
+            break;
+        }
+      } else {
+        switch(dealerMessage.player2_result) {
+          case 0:
+            MyCredit = MyCredit - bet_amount;
+            break;
+          case 1:
+            MyCredit = MyCredit + bet_amount;
+            break;
+          case 2:
+            break;
+        }
+      }
+    }
   }
 }
 
@@ -259,6 +288,7 @@ void ResetGame() {
   betPlaced = false;
   pickStand = false;
   cardCount = 2;
+  gameEnded = false;
   gameStateMessage.state = 0;
   gameStateMessage.bet_amount = 100;
   gameStateMessage.hit = true;
@@ -424,28 +454,4 @@ void handlePlayerPlayingState() {
 
 void handleDealerPlayState() {
   GameResultDisplay();
-  if (id == 1) {
-    switch(dealerMessage.player1_result) {
-      case 0:
-        MyCredit = MyCredit - bet_amount;
-        break;
-      case 1:
-        MyCredit = MyCredit + bet_amount;
-        break;
-      case 2:
-        break;
-    }
-  } else {
-    switch(dealerMessage.player2_result) {
-      case 0:
-        MyCredit = MyCredit - bet_amount;
-        break;
-      case 1:
-        MyCredit = MyCredit + bet_amount;
-        break;
-      case 2:
-        break;
-    }
-
-  }
 }
