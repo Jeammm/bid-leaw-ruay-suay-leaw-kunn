@@ -62,10 +62,10 @@ void InitDisplay(){
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(5,0);
-  display.println("Press letf button if ready"); 
+  display.println("Letf to Ready"); 
   display.setCursor(0,8);
-  display.println("Press right button if withdraw");
-  display.setCursor(20,16);
+  display.println("Right to Withdraw");
+  display.setCursor(25,16);
   display.print("Credit: ");
   display.print(MyCredit);
   display.print(" C");
@@ -321,8 +321,7 @@ void handlePlayerIdleState() {
       gameStateMessage.is_ready=1;
       isReady = true;
       SendStateToDealer();
-    }
-  } else if (button2.isPressed()){
+    } else if (button2.isPressed()){
       Serial.println("Withdraw all credit");
       gameStateMessage.WithdrawCredit = MyCredit;
       MyCredit = 0;
@@ -332,7 +331,9 @@ void handlePlayerIdleState() {
       } else {
         SendWithdrawToCoinMaster2();
       }
-  } else {
+    } 
+  }
+  else {
     WaitingForJoinDisplay();
   }
 }
