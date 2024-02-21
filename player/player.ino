@@ -19,11 +19,13 @@ ezButton button2(5);
 int currentState = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
+uint8_t CoinAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 
 bool isReady = false;
 bool betPlaced = false;
 bool pickStand = false;
 int cardCount = 2;
+int MyCredit = 0;
 
 typedef struct game_state_message {
   int state;
@@ -32,6 +34,7 @@ typedef struct game_state_message {
   bool is_ready;
   int bet_amount;
   bool hit;
+  int WithdrawCredit;
 } game_state_message;
 
 typedef struct dealer_message {
@@ -42,6 +45,8 @@ typedef struct dealer_message {
   int player1_card[5];
   int player2_card[5];
   int dealer_card[5];
+  int FromWho; //if 0 = Dealer, 1 = Coin master 
+  int DepositCredit;
 } dealer_message;
 
 game_state_message gameStateMessage;
@@ -184,6 +189,9 @@ void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
   if (dealerMessage.player_state == 0) {
     ResetGame();
   }
+  if (dealerMessage.FromWho == 1) {
+    MyCredit += dealerMessage.DepositCredit;
+  }
 }
 
 void handlePlayerIdleState();
@@ -270,7 +278,7 @@ void loop () {
 void handlePlayerIdleState() {
   if(!isReady) {
     InitDisplay();
-    if(button1.isPressed() || button2.isPressed()){ //press to ready
+    if(button1.isPressed()){ //press to ready
       Serial.println("state 0 button pressed");
       gameStateMessage.state = currentState;
       gameStateMessage.id=id;
@@ -278,6 +286,12 @@ void handlePlayerIdleState() {
       isReady = true;
       SendStateToDealer();
     }
+  } else if (button2.isPressed()){
+      Serial.println("Withdraw all credit");
+      gameStateMessage.WithdrawCredit = MyCredit;
+      MyCredit = 0;
+      gameStateMessage.id=id;
+      SendStateToDealer();
   } else {
     WaitingForJoinDisplay();
   }
