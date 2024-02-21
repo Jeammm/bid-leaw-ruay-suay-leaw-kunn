@@ -329,7 +329,7 @@ void DealerPlayDisplay() {
   display.setTextColor(WHITE);
   display.setTextSize(1);
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     print_card_no(dealerMessage.dealer_card[i], i%3, i); // card_value, card_icon, card_no
   }
 
