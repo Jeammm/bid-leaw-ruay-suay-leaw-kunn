@@ -348,6 +348,8 @@ void handlePlayerReadyState() {
   }
   // Change state when conditions are met
   if (player1_ready && player2_ready) {
+    WaitingForPlayerDisplay();
+    delay(1000);
     currentState = 1;
     SendStateToPlayer1();
     SendStateToPlayer2();
@@ -368,6 +370,8 @@ void handlePlayerBetState() {
     } else {
       dealerSum += dealerMessage.dealer_card[0];
     }
+    WaitingForBetsDisplay();
+    delay(1000);
     SendStateToPlayer1();
     SendStateToPlayer2();
   }
@@ -401,6 +405,8 @@ void handlePlayerPlayState() {
       } else {
         dealerSum += dealerMessage.dealer_card[countCardDealer];
       }
+      DealerCardDisplay();
+      delay(300);
       countCardDealer++;
     }
     Serial.print("Player 1: ");
