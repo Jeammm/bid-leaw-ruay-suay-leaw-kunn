@@ -18,6 +18,14 @@ ezButton button2(5);
 //variables
 int currentState = 0;
 
+//pot value
+const int potPin = 35;
+int potValue = 0;
+
+// bet
+int bet_amount = 0;
+int MyCredit=1000;
+
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 
 uint8_t player1MacAddress[] = {0x3C, 0x71, 0xBF, 0x10, 0x5C, 0x3C};
@@ -103,6 +111,7 @@ void PlaceYourBetDisplay(){
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println("Place your bet");
+  display.println(bet_amount);
   display.display();
 }
 
@@ -220,7 +229,7 @@ void ResetGame() {
 void setup() {
   button1.setDebounceTime(400); 
   button2.setDebounceTime(400);
-
+  
   Serial.begin(115200);
 
   WiFi.mode(WIFI_STA);
@@ -262,6 +271,7 @@ void setup() {
 }
 
 void loop () {
+  potValue = analogRead(potPin);
   button1.loop();
   button2.loop();
   switch(currentState) {
@@ -297,14 +307,37 @@ void handlePlayerIdleState() {
 }
 
 void handlePlayerPlaceBetState() {
+  Serial.println(potValue);
   if (!betPlaced) {
     PlaceYourBetDisplay();
+    if (potValue <= 400){
+      bet_amount = MyCredit*0.1;
+    }else if (potValue <= 800){
+      bet_amount = MyCredit*0.2;
+    }else if (potValue <= 1200){
+      bet_amount = MyCredit*0.3;
+    }else if (potValue <= 1600){
+      bet_amount = MyCredit*0.4;
+    }else if (potValue <= 2000){
+      bet_amount = MyCredit*0.5;
+    }else if (potValue <= 2400){
+      bet_amount = MyCredit*0.6;
+    }else if (potValue <= 2800){
+      bet_amount = MyCredit*0.7;
+    }else if (potValue <= 3200){
+      bet_amount = MyCredit*0.8;
+    }else if (potValue <= 3600){
+      bet_amount = MyCredit*0.9;
+    }else if (potValue <= 4096){
+      bet_amount = MyCredit;
+    }
+
     if(button1.isPressed()){ // press to place bet
       Serial.println("state 1 button pressed");
       gameStateMessage.state = currentState;
       gameStateMessage.id=id;
       gameStateMessage.is_ready=1;
-      gameStateMessage.bet_amount=100;
+      gameStateMessage.bet_amount=bet_amount;
       betPlaced = true;
       SendStateToDealer();
     }
@@ -342,4 +375,28 @@ void handlePlayerPlayingState() {
 
 void handleDealerPlayState() {
   GameResultDisplay();
+  if (id == 1) {
+    switch(dealerMessage.player1_result) {
+      case 0:
+        MyCredit = MyCredit - bet_amount
+        break;
+      case 1:
+        MyCredit = MyCredit + bet_amount
+        break;
+      case 2:
+        break;
+    }
+  } else {
+    switch(dealerMessage.player2_result) {
+      case 0:
+        MyCredit = MyCredit - bet_amount
+        break;
+      case 1:
+        MyCredit = MyCredit + bet_amount
+        break;
+      case 2:
+        break;
+    }
+
+  }
 }
