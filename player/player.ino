@@ -9,7 +9,7 @@
 Adafruit_SSD1306 display(OLED_RESET);
 
 //id
-int id=2;
+int id;
 
 //button
 ezButton button1(4);
@@ -20,6 +20,8 @@ int currentState = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 uint8_t CoinAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
+
+uint8_t player1MacAddress[] = {0x3C, 0x71, 0xBF, 0x10, 0x5C, 0x3C};
 
 bool isReady = false;
 bool betPlaced = false;
@@ -238,6 +240,17 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c); //สั่งให้จอ OLED เริ่มทำงานที่ Address 0x3C
   display.clearDisplay();
   InitDisplay();
+
+  uint8_t myMacAddress[6];
+  WiFi.macAddress(myMacAddress);
+
+  if (memcmp(myMacAddress, player1MacAddress, 6) == 0) {
+    Serial.println("This is player 1");
+    id = 1;
+  } else {
+    Serial.println("This is player 2");
+    id = 2;
+  }
 
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
