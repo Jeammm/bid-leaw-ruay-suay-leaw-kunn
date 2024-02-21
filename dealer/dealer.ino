@@ -148,6 +148,7 @@ void WaitingForPlayerDisplay();
 void WaitingForBetsDisplay();
 void DealerCardDisplay();
 void DealerPlayDisplay();
+void resetGame();
 
 void setup() {
   // put your setup code here, to run once:
@@ -189,6 +190,10 @@ void setup() {
     Serial.println("Fail to add peer");
     return;
   }
+
+  resetGame();
+  SendStateToPlayer1();
+  SendStateToPlayer2();
 }
 
 void loop() {
@@ -438,9 +443,7 @@ void handlePlayerPlayState() {
   }
 }
 
-void handleDealerPlayState() {
-  DealerPlayDisplay();
-  delay(10000);
+void resetGame() {
   currentState = 0;
   player1_ready = false;
   player2_ready = false;
@@ -465,6 +468,12 @@ void handleDealerPlayState() {
   memset(dealerMessage.player1_card, 0, sizeof(dealerMessage.player1_card));
   memset(dealerMessage.player2_card, 0, sizeof(dealerMessage.player2_card));
   memset(dealerMessage.dealer_card, 0, sizeof(dealerMessage.dealer_card));
+}
+
+void handleDealerPlayState() {
+  DealerPlayDisplay();
+  delay(10000);
+  resetGame();
   SendStateToPlayer1();
   SendStateToPlayer2();
 }
