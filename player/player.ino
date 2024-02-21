@@ -19,8 +19,8 @@ ezButton button2(5);
 int currentState = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
-uint8_t CoinAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
-
+uint8_t Coin1MacAddress[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
+uint8_t Coin2MacAddress[] = {0x24, 0x6F, 0x28, 0x50, 0xA6, 0x78};
 uint8_t player1MacAddress[] = {0x3C, 0x71, 0xBF, 0x10, 0x5C, 0x3C};
 
 bool isReady = false;
@@ -61,10 +61,14 @@ void InitDisplay(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(15,8);
-  display.println("Press any button"); 
-  display.setCursor(35,16);
-  display.println("to start");
+  display.setCursor(5,0);
+  display.println("Press letf button if ready"); 
+  display.setCursor(0,8);
+  display.println("Press right button if withdraw");
+  display.setCursor(20,16);
+  display.print("Credit: ");
+  display.print(MyCredit);
+  display.print(" C");
   display.display();
 }
 
@@ -193,6 +197,7 @@ void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
   }
   if (dealerMessage.FromWho == 1) {
     MyCredit += dealerMessage.DepositCredit;
+    Serial.println("deposit 100 credit");
   }
 }
 
@@ -211,6 +216,24 @@ void SendStateToDealer() {
   while(result != ESP_OK)
   {
     result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  }
+  return;
+}
+
+void SendWithdrawToCoinMaster1() {
+  esp_err_t result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  while(result != ESP_OK)
+  {
+    result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  }
+  return;
+}
+
+void SendWithdrawToCoinMaster2() {
+  esp_err_t result = esp_now_send(Coin2MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  while(result != ESP_OK)
+  {
+    result = esp_now_send(Coin2MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   }
   return;
 }
@@ -304,7 +327,11 @@ void handlePlayerIdleState() {
       gameStateMessage.WithdrawCredit = MyCredit;
       MyCredit = 0;
       gameStateMessage.id=id;
-      SendStateToDealer();
+      if(id == 1) {
+        SendWithdrawToCoinMaster1();
+      } else {
+        SendWithdrawToCoinMaster2();
+      }
   } else {
     WaitingForJoinDisplay();
   }
