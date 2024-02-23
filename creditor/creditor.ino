@@ -5,12 +5,19 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ezButton.h>
+#include <ESP32Servo.h>
 
+#define PIN_SERVO 2
 #define OLED_RESET 16
-Adafruit_SSD1306 display(OLED_RESET);
 
 //id
 int id;
+
+// servo
+Servo dispenserServo;
+
+// display
+Adafruit_SSD1306 display(OLED_RESET);
 
 //buttons
 ezButton button1(4);
@@ -20,10 +27,12 @@ ezButton button2(5);
 uint8_t player1Address[] = {0x3C,0x71,0xBF,0x10,0x5C,0x3C};
 uint8_t player2Address[] = {0x3C,0x61,0x05,0x04,0x3F,0x18};
 
-//creditor MAC
+//creditor1's  MAC
 uint8_t creditor1Address[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
 
+// variables
 int coinCount;
+bool withdrawState = false;
 
 esp_now_peer_info_t peerInfo;
 
@@ -52,6 +61,15 @@ typedef struct dealer_message {
 game_state_message gameStateMessage;
 dealer_message dealerMessage;
 
+void CoinWithdrawDisplay();
+void dispenseCoin(int amount);
+void SendCoinSignal();
+
+void NormalStateDisplay();
+void CoinWithdrawDisplay();
+
+void handleCoinInsert();
+
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
@@ -61,44 +79,19 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&gameStateMessage, incomingData, sizeof(gameStateMessage));
 
   Serial.println("Data Recieved!");
-}
 
-void SendCoinSignal() {
-  coinCount++;
-  dealerMessage.FromWho = 1;
-  dealerMessage.DepositCredit = 100;
-
-  if (id == 1) {
-    esp_err_t result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
-    while(result1 != ESP_OK)
-    {
-      result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
-    }
-    return;
-  } else {
-    esp_err_t result1 = esp_now_send(player2Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
-    while(result1 != ESP_OK)
-    {
-      result1 = esp_now_send(player2Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
-    }
-    return;
+  if (gameStateMessage.id == id) {
+    dispenseCoin(gameStateMessage.WithdrawCredit);
   }
-}
-
-void CoinMachineDisplay() {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(0,0);
-  display.print("Coin : ");
-  display.println(coinCount);
-  display.display();
 }
 
 void setup() {
   // put your setup code here, to run once:
+  dispenserServo.attach(PIN_SERVO);
+
   button1.setDebounceTime(300); 
   button2.setDebounceTime(300);
+
   coinCount = 0;
 
   Serial.begin(115200);
@@ -150,25 +143,72 @@ void setup() {
   }
 }
 
-void handleCoinInsert();
-void handleCoinWithdraw();
-
 void loop() {
   // put your main code here, to run repeatedly:
   button1.loop();
   button2.loop();
 
-  CoinMachineDisplay();
+  NormalStateDisplay();
   handleCoinInsert();
-  handleCoinWithdraw();
+}
+
+void SendCoinSignal() {
+  coinCount++;
+  dealerMessage.FromWho = 1;
+  dealerMessage.DepositCredit = 100;
+
+  if (id == 1) {
+    esp_err_t result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
+    while(result1 != ESP_OK)
+    {
+      result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
+    }
+    return;
+  } else {
+    esp_err_t result1 = esp_now_send(player2Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
+    while(result1 != ESP_OK)
+    {
+      result1 = esp_now_send(player2Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
+    }
+    return;
+  }
+}
+
+void NormalStateDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Coin : ");
+  display.println(coinCount);
+  display.display();
+}
+
+void CoinWithdrawDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Withdrawing...");
+  display.display();
+}
+
+void dispenseCoin(int amount) {  // servo at pin 2
+  withdrawState = true;
+  CoinWithdrawDisplay();
+  for (int i = 0; i < amount; i += 100) {
+    dispenserServo.write(0);
+    delay(100);
+    dispenserServo.write(180);
+    delay(400);
+    dispenserServo.write(0);
+    delay(400);
+  }
+  withdrawState = false;
 }
 
 void handleCoinInsert() {
   if(button1.isPressed()){ //if hit
     SendCoinSignal();
   }
-}
-
-void handleCoinWithdraw() {
-
 }
