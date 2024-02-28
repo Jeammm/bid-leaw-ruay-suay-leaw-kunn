@@ -28,7 +28,7 @@ int potValue = 0;
 
 // bet
 int bet_amount = 0;
-int MyCredit=1000;
+int MyCredit = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 uint8_t Coin1MacAddress[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
@@ -322,6 +322,7 @@ void SendWithdrawToCoinMaster1() {
   esp_err_t result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   while(result != ESP_OK)
   {
+    Serial.println("retying");
     result = esp_now_send(Coin1MacAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   }
   return;
@@ -348,8 +349,8 @@ void ResetGame() {
 }
 
 void setup() {
-  button1.setDebounceTime(400); 
-  button2.setDebounceTime(400);
+  button1.setDebounceTime(50); 
+  button2.setDebounceTime(50);
   
   Serial.begin(115200);
 
@@ -383,6 +384,28 @@ void setup() {
     Serial.println("Fail to add peer");
     return;
   }
+
+  if (id == 1) {
+    for(int i=0; i<6; ++i) {
+      peerInfo.peer_addr[i] = (uint8_t) Coin1MacAddress[i];
+    }
+    //Add peer
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+      Serial.println("Fail to add peer");
+      return;
+    }
+  } else {
+    for(int i=0; i<6; ++i) {
+      peerInfo.peer_addr[i] = (uint8_t) Coin2MacAddress[i];
+    }
+    //Add peer
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+      Serial.println("Fail to add peer");
+      return;
+    }
+
+  }
+
 
   //Register send callback
   esp_now_register_send_cb(OnDataSent);
