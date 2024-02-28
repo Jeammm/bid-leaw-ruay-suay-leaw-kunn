@@ -6,9 +6,13 @@
 #include <Adafruit_SSD1306.h>
 #include <ezButton.h>
 #include <ESP32Servo.h>
+// #include <Servo.h>
 
+#define COIN_ACCEPTOR 23
 #define PIN_SERVO 2
 #define OLED_RESET 16
+
+void ICACHE_RAM_ATTR trigger();
 
 //id
 int id;
@@ -33,6 +37,9 @@ uint8_t creditor1Address[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
 // variables
 int coinCount;
 bool withdrawState = false;
+volatile bool isCounter = false;
+volatile int count = 0;
+volatile int coinToDispense = 0;
 
 esp_now_peer_info_t peerInfo;
 
@@ -85,12 +92,19 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   }
 }
 
+void ICACHE_RAM_ATTR trigger () {
+  isCounter = true;
+}
+
 void setup() {
   // put your setup code here, to run once:
   dispenserServo.attach(PIN_SERVO);
 
   button1.setDebounceTime(300); 
   button2.setDebounceTime(300);
+
+  pinMode(COIN_ACCEPTOR, INPUT);
+  attachInterrupt(digitalPinToInterrupt(COIN_ACCEPTOR), trigger, FALLING);
 
   coinCount = 0;
 
@@ -149,7 +163,27 @@ void loop() {
   button2.loop();
 
   NormalStateDisplay();
-  handleCoinInsert();
+  // handleCoinInsert();
+  if (isCounter) {
+    isCounter = false;
+    count++;
+    if (count > 1) {
+      Serial.println("tringger leaw krabb");
+      SendCoinSignal();
+      NormalStateDisplay();
+      delay(1000);
+      count = 0;
+    }
+  }
+
+  if (coinToDispense > 0) {
+    Serial.println(coinToDispense);
+    // dispenserServo.writeMicroseconds(2000000);
+    coinToDispense--;
+    delay(1000);
+    // dispenserServo.writeMicroseconds(0);
+    delay(1000);
+  }
 }
 
 void SendCoinSignal() {
@@ -181,6 +215,8 @@ void NormalStateDisplay() {
   display.setCursor(0,0);
   display.print("Coin : ");
   display.println(coinCount);
+  display.print("PLAYER");
+  display.println(id);
   display.display();
 }
 
@@ -194,15 +230,15 @@ void CoinWithdrawDisplay() {
 }
 
 void dispenseCoin(int amount) {  // servo at pin 2
+  Serial.println(amount);
   withdrawState = true;
+  // coinToDispense = amount / 100;
   CoinWithdrawDisplay();
   for (int i = 0; i < amount; i += 100) {
     dispenserServo.write(0);
-    delay(100);
+    delay(350);
     dispenserServo.write(180);
-    delay(400);
-    dispenserServo.write(0);
-    delay(400);
+    delay(350);
   }
   withdrawState = false;
 }
