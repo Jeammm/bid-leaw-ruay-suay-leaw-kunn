@@ -41,7 +41,9 @@ int dealerSum = 0;
 int countCardDealer = 0;
 
 int player1Sum = 0;
+bool player1ACE = false;
 int player2Sum = 0;
+bool player2ACE = false;
 
 typedef struct game_state_message {
   int state;
@@ -393,6 +395,9 @@ void handlePlayerPlayState() {
       } 
       else {
         player1Sum += dealerMessage.player1_card[i];
+        if(dealerMessage.player1_card[i]==1) {
+          player1ACE = true;
+        }
       }
 
       if(dealerMessage.player2_card[i] > 10) {
@@ -400,6 +405,9 @@ void handlePlayerPlayState() {
       }
       else {
         player2Sum += dealerMessage.player2_card[i];
+        if(dealerMessage.player2_card[i]==1) {
+          player2ACE = true;
+        }
       }
     }
 
@@ -421,16 +429,51 @@ void handlePlayerPlayState() {
     Serial.print("Dealer: ");
     Serial.println(dealerSum);
 
-    if(player1Sum > 21 || (player1Sum < dealerSum && dealerSum < 22)) {
+    //RESULTCHECK
+    //PLAYER1
+    if(player1Sum > 21) {
       dealerMessage.player1_result = 0;
+    } else if ((player1Sum < dealerSum && dealerSum < 22)){
+        
+        if(player1ACE==true){
+          player1Sum+=10;
+          //Result ACE=11 CHECK
+          if(player1Sum > 21 || player1Sum < dealerSum){
+              dealerMessage.player1_result = 0;
+          } else if (player1Sum == dealerSum) {
+              dealerMessage.player1_result = 2;
+          } else {
+              dealerMessage.player1_result = 1;
+          }
+        } else {
+            dealerMessage.player1_result = 0;
+        }
+
     } else if (player1Sum == dealerSum){
       dealerMessage.player1_result = 2; // draw
     } else {
       dealerMessage.player1_result = 1;
     }
 
-    if(player2Sum > 21 || (player2Sum < dealerSum && dealerSum < 22)) {
+    //PLAYER2
+    if(player2Sum > 21) {
       dealerMessage.player2_result = 0;
+    } else if ((player1Sum < dealerSum && dealerSum < 22)){
+        
+        if(player2ACE==true){
+          player2Sum+=10;
+          //Result ACE=11 CHECK
+          if(player2Sum > 21 || player2Sum < dealerSum){
+              dealerMessage.player2_result = 0;
+          } else if (player2Sum == dealerSum) {
+              dealerMessage.player2_result = 2;
+          } else {
+              dealerMessage.player2_result = 1;
+          }
+        } else {
+            dealerMessage.player2_result = 0;
+        }
+
     } else if (player2Sum == dealerSum){
       dealerMessage.player2_result = 2; // draw
     } else {
@@ -460,7 +503,9 @@ void resetGame() {
   countCardDealer = 0;
 
   player1Sum = 0;
+  player1ACE = false;
   player2Sum = 0;
+  player2ACE = false;
 
   dealerMessage.player_state = 0;  
   dealerMessage.player1_result = 0; 
