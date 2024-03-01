@@ -416,7 +416,7 @@ void handlePlayerPlayState() {
       }
     }
 
-    while ((dealerSum < 17 && dealerSumACE < 17) && countCardDealer < 5) {   //do once
+    while ((dealerSum < 17) && countCardDealer < 5) {   //do once
       dealerMessage.dealer_card[countCardDealer] = random(1,14);
       if(dealerMessage.dealer_card[countCardDealer] > 10) {
         dealerSum += 10;
@@ -430,9 +430,10 @@ void handlePlayerPlayState() {
       DealerCardDisplay();
       delay(300);
       countCardDealer++;
-    }
-    if(dealerSumACE > dealerSum && dealerSumACE <= 21){
-      dealerSum = dealerSumACE;                                         
+      if(dealerSumACE>17 && dealerSumACE<=21){
+        dealerSum = dealerSumACE; 
+        break;
+      }
     }
 
     Serial.print("Player 1: ");
