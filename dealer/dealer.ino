@@ -38,6 +38,7 @@ bool player1_stand = false;
 bool player2_stand = false;
 
 int dealerSum = 0;
+int dealerSumACE = 0;
 int countCardDealer = 0;
 
 int player1Sum = 0;
@@ -376,6 +377,10 @@ void handlePlayerBetState() {
       dealerSum += 10;
     } else {
       dealerSum += dealerMessage.dealer_card[0];
+      dealerSumACE += dealerMessage.dealer_card[0];
+      if(dealerMessage.dealer_card[0]==1){
+        dealerSumACE +=10;
+      }
     }
     WaitingForBetsDisplay();
     delay(1000);
@@ -411,17 +416,25 @@ void handlePlayerPlayState() {
       }
     }
 
-    while (dealerSum < 17 && countCardDealer < 5) {   //do once
+    while ((dealerSum < 17 && dealerSumACE < 17) && countCardDealer < 5) {   //do once
       dealerMessage.dealer_card[countCardDealer] = random(1,14);
       if(dealerMessage.dealer_card[countCardDealer] > 10) {
         dealerSum += 10;
       } else {
         dealerSum += dealerMessage.dealer_card[countCardDealer];
+        dealerSumACE += dealerMessage.dealer_card[countCardDealer];
+        if(dealerMessage.dealer_card[countCardDealer]==1 && dealerSumACE+10 <= 21){
+          dealerSumACE +=10;
+        }
       }
       DealerCardDisplay();
       delay(300);
       countCardDealer++;
     }
+    if(dealerSumACE > dealerSum && dealerSumACE <= 21){
+      dealerSum = dealerSumACE;                                         
+    }
+
     Serial.print("Player 1: ");
     Serial.println(player1Sum);
     Serial.print("Player 2: ");
@@ -500,6 +513,7 @@ void resetGame() {
   player2_stand = false;
 
   dealerSum = 0;
+  dealerSumACE = 0;
   countCardDealer = 0;
 
   player1Sum = 0;
