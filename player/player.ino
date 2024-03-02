@@ -7,6 +7,7 @@
 #include <ezButton.h>
 #include "card_icon.h"
 #include "card_printer.h"
+#include <ESP32RotaryEncoder.h>
 
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
@@ -23,12 +24,20 @@ int currentState = 0;
 int gameEnded = false;
 
 //pot value
-const int potPin = 35;
+// const int potPin = 35;
+const int potPin = 36;
 int potValue = 0;
 
 // bet
 int bet_amount = 0;
 int MyCredit = 0;
+
+//rotary
+const uint8_t DI_ENCODER_A   = 34; // Might be labeled CLK
+const uint8_t DI_ENCODER_B   = 35; // Might be labeled DT
+const int8_t  DI_ENCODER_SW  = 32; // SW Pin
+RotaryEncoder rotaryEncoder( DI_ENCODER_A, DI_ENCODER_B, DI_ENCODER_SW );
+uint8_t rotary_percentage = 0;
 
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x03, 0x69, 0x64};
 uint8_t Coin1MacAddress[] = {0xA4, 0xCF, 0x12, 0x8F, 0xBA, 0x18};
@@ -66,6 +75,17 @@ game_state_message gameStateMessage;
 dealer_message dealerMessage;
 
 esp_now_peer_info_t peerInfo;
+
+void knobCallback( long value )
+{
+    rotary_percentage = value;
+    Serial.printf( "Value: %i\n", value );
+}
+
+void buttonCallback( unsigned long duration )
+{
+    Serial.printf( "boop! button was down for %u ms\n", duration );
+}
 
 //Start display
 void InitDisplay(){
@@ -349,8 +369,8 @@ void ResetGame() {
 }
 
 void setup() {
-  button1.setDebounceTime(50); 
-  button2.setDebounceTime(50);
+  button1.setDebounceTime(250); 
+  button2.setDebounceTime(250);
   
   Serial.begin(115200);
 
@@ -412,6 +432,27 @@ void setup() {
 
   //Register receive callback
   esp_now_register_recv_cb(OnStateRecieve);
+
+  // This tells the library that the encoder has its own pull-up resistors
+  rotaryEncoder.setEncoderType( EncoderType::HAS_PULLUP );
+
+  // Range of values to be returned by the encoder: minimum is 1, maximum is 10
+  // The third argument specifies whether turning past the minimum/maximum will
+  // wrap around to the other side:
+  //  - true  = turn past 10, wrap to 1; turn past 1, wrap to 10
+  //  - false = turn past 10, stay on 10; turn past 1, stay on 1
+  rotaryEncoder.setBoundaries( 1, 10, false );
+
+  // The function specified here will be called every time the knob is turned
+  // and the current value will be passed to it
+  rotaryEncoder.onTurned( &knobCallback );
+
+  // The function specified here will be called every time the button is pushed and
+  // the duration (in milliseconds) that the button was down will be passed to it
+  rotaryEncoder.onPressed( &buttonCallback );
+
+  // This is where the inputs are configured and the interrupts get attached
+  rotaryEncoder.begin();
 }
 
 void loop () {
@@ -462,30 +503,31 @@ void handlePlayerIdleState() {
 }
 
 void handlePlayerPlaceBetState() {
-  Serial.println(potValue);
+  // Serial.println(potValue);
   if (!betPlaced) {
     PlaceYourBetDisplay();
-    if (potValue <= 400){
-      bet_amount = MyCredit*0.1;
-    }else if (potValue <= 800){
-      bet_amount = MyCredit*0.2;
-    }else if (potValue <= 1200){
-      bet_amount = MyCredit*0.3;
-    }else if (potValue <= 1600){
-      bet_amount = MyCredit*0.4;
-    }else if (potValue <= 2000){
-      bet_amount = MyCredit*0.5;
-    }else if (potValue <= 2400){
-      bet_amount = MyCredit*0.6;
-    }else if (potValue <= 2800){
-      bet_amount = MyCredit*0.7;
-    }else if (potValue <= 3200){
-      bet_amount = MyCredit*0.8;
-    }else if (potValue <= 3600){
-      bet_amount = MyCredit*0.9;
-    }else if (potValue <= 4096){
-      bet_amount = MyCredit;
-    }
+    bet_amount = MyCredit * ((float)rotary_percentage / 10);
+    // if (potValue <= 400){
+    //   bet_amount = MyCredit*0.1;
+    // }else if (potValue <= 800){
+    //   bet_amount = MyCredit*0.2;
+    // }else if (potValue <= 1200){
+    //   bet_amount = MyCredit*0.3;
+    // }else if (potValue <= 1600){
+    //   bet_amount = MyCredit*0.4;
+    // }else if (potValue <= 2000){
+    //   bet_amount = MyCredit*0.5;
+    // }else if (potValue <= 2400){
+    //   bet_amount = MyCredit*0.6;
+    // }else if (potValue <= 2800){
+    //   bet_amount = MyCredit*0.7;
+    // }else if (potValue <= 3200){
+    //   bet_amount = MyCredit*0.8;
+    // }else if (potValue <= 3600){
+    //   bet_amount = MyCredit*0.9;
+    // }else if (potValue <= 4096){
+    //   bet_amount = MyCredit;
+    // }
 
     bet_amount = bet_amount - (bet_amount % 100);
 
