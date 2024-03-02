@@ -472,7 +472,7 @@ void handlePlayerPlayState() {
     //PLAYER2
     if(player2Sum > 21) {
       dealerMessage.player2_result = 0;
-    } else if ((player1Sum < dealerSum && dealerSum < 22)){
+    } else if ((player2Sum < dealerSum && dealerSum < 22)){
         
         if(player2ACE==true){
           player2Sum+=10;
