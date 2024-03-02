@@ -6,10 +6,9 @@
 #include <Adafruit_SSD1306.h>
 #include <ezButton.h>
 #include <ESP32Servo.h>
-// #include <Servo.h>
 
 #define COIN_ACCEPTOR 23
-#define PIN_SERVO 2
+#define PIN_SERVO 15
 #define OLED_RESET 16
 
 void ICACHE_RAM_ATTR trigger();
@@ -155,6 +154,7 @@ void setup() {
     Serial.println("Fail to add peer");
     return;
   }
+  dispenserServo.write(75);
 }
 
 void loop() {
@@ -176,17 +176,30 @@ void loop() {
     }
   }
 
-  if (coinToDispense > 0) {
-    Serial.println(coinToDispense);
-    // dispenserServo.writeMicroseconds(2000000);
-    coinToDispense--;
-    delay(1000);
-    // dispenserServo.writeMicroseconds(0);
-    delay(1000);
-  }
+  // if (coinToDispense > 0) {
+  //   Serial.println(coinToDispense);
+  //   dispenserServo.write(15);
+  //   coinToDispense--;
+  //   delay(500);
+  //   dispenserServo.write(75);
+  //   delay(500);
+  // }
+  // Serial.println("aaa");
 }
 
 void SendCoinSignal() {
+  dispenserServo.write(90);
+  Serial.println("1");
+  delay(500); 
+  dispenserServo.write(75);
+  Serial.println("2");
+  delay(500);
+  dispenserServo.write(90);
+  Serial.println("3");
+  delay(500); 
+  dispenserServo.write(75);
+  Serial.println("4");
+  delay(500);
   coinCount++;
   dealerMessage.FromWho = 1;
   dealerMessage.DepositCredit = 100;
@@ -232,13 +245,13 @@ void CoinWithdrawDisplay() {
 void dispenseCoin(int amount) {  // servo at pin 2
   Serial.println(amount);
   withdrawState = true;
-  // coinToDispense = amount / 100;
+  coinToDispense = amount / 100;
   CoinWithdrawDisplay();
-  for (int i = 0; i < amount; i += 100) {
+  for(int i=0; i<coinToDispense; i++){ 
     dispenserServo.write(0);
-    delay(350);
-    dispenserServo.write(180);
-    delay(350);
+    delay(500); 
+    dispenserServo.write(75);
+    delay(500);
   }
   withdrawState = false;
 }
