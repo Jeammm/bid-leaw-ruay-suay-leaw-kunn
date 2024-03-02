@@ -10,6 +10,7 @@
 #define COIN_ACCEPTOR 23
 #define PIN_SERVO 15
 #define OLED_RESET 16
+#define EJECT_PIN 4
 
 void ICACHE_RAM_ATTR trigger();
 
@@ -23,8 +24,8 @@ Servo dispenserServo;
 Adafruit_SSD1306 display(OLED_RESET);
 
 //buttons
-ezButton button1(4);
-ezButton button2(5);
+// ezButton button1(EJECT_PIN);
+// ezButton button2(5);
 
 //player MAC
 uint8_t player1Address[] = {0x3C,0x71,0xBF,0x10,0x5C,0x3C};
@@ -95,12 +96,19 @@ void ICACHE_RAM_ATTR trigger () {
   isCounter = true;
 }
 
+void ServoEject() {
+  dispenserServo.write(0);
+  delay(500); 
+  dispenserServo.write(75);
+  delay(500);
+}
+
 void setup() {
   // put your setup code here, to run once:
   dispenserServo.attach(PIN_SERVO);
-
-  button1.setDebounceTime(300); 
-  button2.setDebounceTime(300);
+  pinMode(EJECT_PIN, INPUT_PULLUP);
+  // button1.setDebounceTime(250); 
+  // button2.setDebounceTime(300);
 
   pinMode(COIN_ACCEPTOR, INPUT);
   attachInterrupt(digitalPinToInterrupt(COIN_ACCEPTOR), trigger, FALLING);
@@ -158,12 +166,11 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  button1.loop();
-  button2.loop();
+  if (digitalRead(EJECT_PIN) == LOW) {
+    ServoEject();
+  }
 
   NormalStateDisplay();
-  // handleCoinInsert();
   if (isCounter) {
     isCounter = false;
     count++;
@@ -175,31 +182,9 @@ void loop() {
       count = 0;
     }
   }
-
-  // if (coinToDispense > 0) {
-  //   Serial.println(coinToDispense);
-  //   dispenserServo.write(15);
-  //   coinToDispense--;
-  //   delay(500);
-  //   dispenserServo.write(75);
-  //   delay(500);
-  // }
-  // Serial.println("aaa");
 }
 
 void SendCoinSignal() {
-  dispenserServo.write(90);
-  Serial.println("1");
-  delay(500); 
-  dispenserServo.write(75);
-  Serial.println("2");
-  delay(500);
-  dispenserServo.write(90);
-  Serial.println("3");
-  delay(500); 
-  dispenserServo.write(75);
-  Serial.println("4");
-  delay(500);
   coinCount++;
   dealerMessage.FromWho = 1;
   dealerMessage.DepositCredit = 100;
@@ -248,16 +233,7 @@ void dispenseCoin(int amount) {  // servo at pin 2
   coinToDispense = amount / 100;
   CoinWithdrawDisplay();
   for(int i=0; i<coinToDispense; i++){ 
-    dispenserServo.write(0);
-    delay(500); 
-    dispenserServo.write(75);
-    delay(500);
+    ServoEject();
   }
   withdrawState = false;
-}
-
-void handleCoinInsert() {
-  if(button1.isPressed()){ //if hit
-    SendCoinSignal();
-  }
 }
