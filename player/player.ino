@@ -508,11 +508,11 @@ void handlePlayerPlaceBetState() {
   if (!betPlaced) {
     PlaceYourBetDisplay();
     if(rotary_percentage > last_rotary_percentage && bet_amount != MyCredit) { //value increased and still not max yet
-      bet_amount += 100;
+      bet_amount += 100 * (rotary_percentage - last_rotary_percentage);
     }
 
     if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
-      bet_amount -= 100;
+      bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
     }
     // bet_amount = MyCredit * ((float)rotary_percentage / 10);
     
