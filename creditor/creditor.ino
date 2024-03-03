@@ -40,6 +40,8 @@ bool withdrawState = false;
 volatile bool isCounter = false;
 volatile int count = 0;
 volatile int coinToDispense = 0;
+volatile int coinremaining = 0;
+int coin_balance;
 
 esp_now_peer_info_t peerInfo;
 
@@ -74,6 +76,8 @@ void SendCoinSignal();
 
 void NormalStateDisplay();
 void CoinWithdrawDisplay();
+void CoinRemainingDisplay();
+void CoinincreditorDisplay();
 
 void handleCoinInsert();
 
@@ -231,9 +235,33 @@ void dispenseCoin(int amount) {  // servo at pin 2
   Serial.println(amount);
   withdrawState = true;
   coinToDispense = amount / 100;
+  coin_balance = coinCount - coinToDispense;
   CoinWithdrawDisplay();
   for(int i=0; i<coinToDispense; i++){ 
+    coinremaining = coinToDispense - i;
     ServoEject();
+    CoinRemainingDisplay();
   }
+  CoinincreditorDisplay();
   withdrawState = false;
+}
+
+void CoinRemainingDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Coin remaining : ");
+  display.print(coinremaining);
+  display.display();
+}
+
+void CoinincreditorDisplay(){
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(0,0);
+  display.print("Coin in creditor : ");
+  display.print(coin_balnce);
+  display.display();
 }
