@@ -76,8 +76,7 @@ void SendCoinSignal();
 
 void NormalStateDisplay();
 void CoinWithdrawDisplay();
-void CoinRemainingDisplay();
-void CoinincreditorDisplay();
+void CoinRemainingDisplay(int coinremaining);
 
 void handleCoinInsert();
 
@@ -173,8 +172,8 @@ void loop() {
   if (digitalRead(EJECT_PIN) == LOW) {
     ServoEject();
   }
-
-  NormalStateDisplay();
+ // NormalStateDisplay();
+  
   if (isCounter) {
     isCounter = false;
     count++;
@@ -185,13 +184,23 @@ void loop() {
       delay(1000);
       count = 0;
     }
+  
   }
+  if (withdrawState == false) {
+    NormalStateDisplay();
+  }
+  else{
+    CoinRemainingDisplay(coinremaining);
+    coinCount = 0;
+  }
+
 }
 
 void SendCoinSignal() {
   coinCount++;
   dealerMessage.FromWho = 1;
   dealerMessage.DepositCredit = 100;
+  coin_balance = coinCount;
 
   if (id == 1) {
     esp_err_t result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
@@ -216,7 +225,7 @@ void NormalStateDisplay() {
   display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
   display.print("Coin : ");
-  display.println(coinCount);
+  display.println(coin_balance);
   display.print("PLAYER");
   display.println(id);
   display.display();
@@ -239,29 +248,20 @@ void dispenseCoin(int amount) {  // servo at pin 2
   CoinWithdrawDisplay();
   for(int i=0; i<coinToDispense; i++){ 
     coinremaining = coinToDispense - i;
+    Serial.print(coinremaining);
     ServoEject();
-    CoinRemainingDisplay();
   }
-  CoinincreditorDisplay();
+
   withdrawState = false;
 }
 
-void CoinRemainingDisplay() {
+void CoinRemainingDisplay(int coinremaining) {
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
-  display.print("Coin remaining : ");
-  display.print(coinremaining);
+  display.print("Remaining : ");
+  display.println(coinremaining);
   display.display();
 }
 
-void CoinincreditorDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(0,0);
-  display.print("Coin in creditor : ");
-  display.print(coin_balnce);
-  display.display();
-}
