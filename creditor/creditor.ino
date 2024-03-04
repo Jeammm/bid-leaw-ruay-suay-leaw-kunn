@@ -41,7 +41,6 @@ volatile bool isCounter = false;
 volatile int count = 0;
 volatile int coinToDispense = 0;
 volatile int coinremaining = 0;
-int coin_balance;
 
 esp_now_peer_info_t peerInfo;
 
@@ -76,8 +75,7 @@ void SendCoinSignal();
 
 void NormalStateDisplay();
 void CoinWithdrawDisplay();
-void CoinRemainingDisplay();
-void CoinincreditorDisplay();
+void CoinRemainingDisplay(int coinremaining);
 
 void handleCoinInsert();
 
@@ -173,8 +171,8 @@ void loop() {
   if (digitalRead(EJECT_PIN) == LOW) {
     ServoEject();
   }
-
-  NormalStateDisplay();
+ // NormalStateDisplay();
+  
   if (isCounter) {
     isCounter = false;
     count++;
@@ -185,7 +183,18 @@ void loop() {
       delay(1000);
       count = 0;
     }
+  
   }
+  if (withdrawState == false) {
+    NormalStateDisplay();
+  }
+  else{
+    CoinRemainingDisplay(coinremaining);
+    if (coinCount<0){
+      coinCount = 0;
+    }
+  }
+
 }
 
 void SendCoinSignal() {
@@ -235,33 +244,25 @@ void dispenseCoin(int amount) {  // servo at pin 2
   Serial.println(amount);
   withdrawState = true;
   coinToDispense = amount / 100;
-  coin_balance = coinCount - coinToDispense;
   CoinWithdrawDisplay();
   for(int i=0; i<coinToDispense; i++){ 
     coinremaining = coinToDispense - i;
+    Serial.print(coinremaining);
     ServoEject();
-    CoinRemainingDisplay();
+    coinCount--;
+    
   }
-  CoinincreditorDisplay();
+
   withdrawState = false;
 }
 
-void CoinRemainingDisplay() {
+void CoinRemainingDisplay(int coinremaining) {
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
-  display.print("Coin remaining : ");
-  display.print(coinremaining);
+  display.print("Remaining : ");
+  display.println(coinremaining);
   display.display();
 }
 
-void CoinincreditorDisplay(){
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(0,0);
-  display.print("Coin in creditor : ");
-  display.print(coin_balnce);
-  display.display();
-}
