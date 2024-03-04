@@ -41,7 +41,6 @@ volatile bool isCounter = false;
 volatile int count = 0;
 volatile int coinToDispense = 0;
 volatile int coinremaining = 0;
-int coin_balance;
 
 esp_now_peer_info_t peerInfo;
 
@@ -191,7 +190,9 @@ void loop() {
   }
   else{
     CoinRemainingDisplay(coinremaining);
-    coinCount = 0;
+    if (coinCount<0){
+      coinCount = 0;
+    }
   }
 
 }
@@ -200,7 +201,6 @@ void SendCoinSignal() {
   coinCount++;
   dealerMessage.FromWho = 1;
   dealerMessage.DepositCredit = 100;
-  coin_balance = coinCount;
 
   if (id == 1) {
     esp_err_t result1 = esp_now_send(player1Address, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
@@ -225,7 +225,7 @@ void NormalStateDisplay() {
   display.setTextColor(BLACK, WHITE);
   display.setCursor(0,0);
   display.print("Coin : ");
-  display.println(coin_balance);
+  display.println(coinCount);
   display.print("PLAYER");
   display.println(id);
   display.display();
@@ -244,12 +244,13 @@ void dispenseCoin(int amount) {  // servo at pin 2
   Serial.println(amount);
   withdrawState = true;
   coinToDispense = amount / 100;
-  coin_balance = coinCount - coinToDispense;
   CoinWithdrawDisplay();
   for(int i=0; i<coinToDispense; i++){ 
     coinremaining = coinToDispense - i;
     Serial.print(coinremaining);
     ServoEject();
+    coinCount--;
+    
   }
 
   withdrawState = false;
