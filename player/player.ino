@@ -109,27 +109,27 @@ void InitDisplay(){
   display.setTextSize(1);
   display.setTextColor(WHITE);
 
-  display.setCursor(24,0);
-  display.print("Credit: ");
+  display.setCursor(0,8);
+  display.println("Credit: ");
   display.print(MyCredit);
   display.println(" C");
 
-  display.setCursor(0,14);
-  display.println("<<<<<");
-  display.setCursor(0,22);
-  display.println("Ready");
+  // display.setCursor(95,0);
+  // display.println(">>>>>");
+  display.setCursor(95,8);
+  display.println("Leave");
 
   display.setCursor(95,14);
   display.println(">>>>>");
   display.setCursor(95,22);
-  display.println("Leave");
+  display.println("Ready");
 
-  display.setTextSize(3);
+  display.setTextSize(4);
   display.setTextColor(BLACK, WHITE);
-  display.setCursor(36, 8);
+  display.setCursor(36, 0);
   display.println("   ");
 
-  display.setCursor(45, 9);
+  display.setCursor(45, 1);
   if (id == 1) {
     display.println("P1");
   } else {
