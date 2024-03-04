@@ -89,7 +89,7 @@ void knobCallback( long value )
           }
         }
 
-        if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
+        if(rotary_percentage < last_rotary_percentage && bet_amount > 0) { //value decreased and still not 0 yet
           bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
           if (bet_amount < 0) {
             bet_amount = 0;
@@ -97,6 +97,7 @@ void knobCallback( long value )
         }
       }
     }
+    last_rotary_percentage = rotary_percentage;
     Serial.printf( "Value: %i\n", value );
 }
 
@@ -548,7 +549,7 @@ void handlePlayerPlaceBetState() {
   } else {
     WaitingForOthersBetDisplay();
   }
-  last_rotary_percentage = rotary_percentage;
+  // last_rotary_percentage = rotary_percentage;
 }
 
 void handlePlayerPlayingState() {
