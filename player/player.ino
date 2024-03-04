@@ -80,6 +80,21 @@ esp_now_peer_info_t peerInfo;
 void knobCallback( long value )
 {
     rotary_percentage = value;
+    if (!betPlaced) {
+      if(rotary_percentage > last_rotary_percentage && bet_amount != MyCredit) { //value increased and still not max yet
+        bet_amount += 100 * (rotary_percentage - last_rotary_percentage);
+        if (bet_amount > MyCredit) {
+          bet_amount = MyCredit;
+        }
+      }
+
+      if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
+        bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
+        if (bet_amount < 0) {
+          bet_amount = 0;
+        }
+      }
+    }
     Serial.printf( "Value: %i\n", value );
 }
 
@@ -507,13 +522,13 @@ void handlePlayerPlaceBetState() {
   // Serial.println(potValue);
   if (!betPlaced) {
     PlaceYourBetDisplay();
-    if(rotary_percentage > last_rotary_percentage && bet_amount != MyCredit) { //value increased and still not max yet
-      bet_amount += 100 * (rotary_percentage - last_rotary_percentage);
-    }
+    // if(rotary_percentage > last_rotary_percentage && bet_amount != MyCredit) { //value increased and still not max yet
+    //   bet_amount += 100 * (rotary_percentage - last_rotary_percentage);
+    // }
 
-    if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
-      bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
-    }
+    // if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
+    //   bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
+    // }
     // bet_amount = MyCredit * ((float)rotary_percentage / 10);
     
     // bet_amount = bet_amount - (bet_amount % 100);
