@@ -67,6 +67,7 @@ typedef struct dealer_message {
   int dealer_card[5];
   int FromWho; //if 0 = Dealer, 1 = Coin master 
   int DepositCredit;
+  int ForWho;
 } dealer_message;
 
 game_state_message gameStateMessage;
