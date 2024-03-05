@@ -8,6 +8,7 @@
 #include "card_icon.h"
 #include "card_printer.h"
 #include <ESP32RotaryEncoder.h>
+#include <string.h>
 
 #define OLED_RESET 16
 Adafruit_SSD1306 display(OLED_RESET);
@@ -22,6 +23,7 @@ ezButton button2(5);
 //variables
 int currentState = 0;
 int gameEnded = false;
+int cardLoading = false;
 
 //pot value
 // const int potPin = 35;
@@ -70,6 +72,7 @@ typedef struct dealer_message {
   int dealer_card[5];
   int FromWho; //if 0 = Dealer, 1 = Coin master 
   int DepositCredit;
+  int ForWho;
 } dealer_message;
 
 game_state_message gameStateMessage;
@@ -171,6 +174,16 @@ void WaitingForJoinDisplay(){
   }
   display.println("...");
 
+  display.display();
+}
+
+void LoadingDisplay() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+
+  display.setCursor(0,0);
+  display.print("Loading...");
   display.display();
 }
 
@@ -302,6 +315,18 @@ void OnStateRecieve(const uint8_t * mac, const uint8_t *incomingData, int len){
     Serial.println("deposit 100 credit");
   } else {
     currentState = dealerMessage.player_state;
+    
+    if (id == 1) {
+      if (dealerMessage.ForWho == 1) {
+        cardLoading = false;
+      }
+    } else {
+      if (dealerMessage.ForWho == 2) {
+      // if (!memcmp(dealerMessage.message, "2", sizeof(dealerMessage.message) == 0)) {
+        cardLoading = false;
+      }
+    }
+
     if (dealerMessage.player_state == 0) {
       ResetGame();
     } else if (dealerMessage.player_state == 3) {
@@ -345,13 +370,20 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
 }
 
+void SendHitToDealer() {
+  cardLoading = true;
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  while(result != ESP_OK) {
+    result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
+  }
+}
+
 void SendStateToDealer() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   while(result != ESP_OK)
   {
     result = esp_now_send(broadcastAddress, (uint8_t *) &gameStateMessage, sizeof(gameStateMessage));
   }
-  return;
 }
 
 void SendWithdrawToCoinMaster1() {
@@ -472,7 +504,6 @@ void setup() {
 }
 
 void loop () {
-  potValue = analogRead(potPin);
   button1.loop();
   button2.loop();
   switch(currentState) {
@@ -519,20 +550,8 @@ void handlePlayerIdleState() {
 }
 
 void handlePlayerPlaceBetState() {
-  // Serial.println(potValue);
   if (!betPlaced) {
     PlaceYourBetDisplay();
-    // if(rotary_percentage > last_rotary_percentage && bet_amount != MyCredit) { //value increased and still not max yet
-    //   bet_amount += 100 * (rotary_percentage - last_rotary_percentage);
-    // }
-
-    // if(rotary_percentage < last_rotary_percentage && bet_amount != 0) { //value decreased and still not 0 yet
-    //   bet_amount -= 100 * (last_rotary_percentage - rotary_percentage);
-    // }
-    // bet_amount = MyCredit * ((float)rotary_percentage / 10);
-    
-    // bet_amount = bet_amount - (bet_amount % 100);
-
     if(button1.isPressed()){ // press to place bet
       Serial.println("state 1 button pressed");
       gameStateMessage.state = currentState;
@@ -549,12 +568,15 @@ void handlePlayerPlaceBetState() {
 }
 
 void handlePlayerPlayingState() {
-  if(button1.isPressed()){ //if hit
+
+  if(button1.isPressed() && !cardLoading){ //if hit
+    Serial.print("card loading");
+    Serial.println(cardLoading);
     Serial.println("You Pick Hit!");
     gameStateMessage.state=currentState;
     gameStateMessage.id=id;
     gameStateMessage.hit=true;
-    SendStateToDealer();
+    SendHitToDealer();
     cardCount++;
     if (cardCount == 5) {
       pickStand=true;
@@ -568,9 +590,13 @@ void handlePlayerPlayingState() {
     pickStand=true;
     SendStateToDealer();
   }
-  if (!pickStand) {
+  if (cardLoading) {
+    LoadingDisplay();
+  }
+  else if (!pickStand) {
     DecisionDisplay();
-  } else {
+  }
+  else {
     StandPickedDisplay();
   }
 }

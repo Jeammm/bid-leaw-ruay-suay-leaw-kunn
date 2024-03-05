@@ -46,6 +46,8 @@ bool player1ACE = false;
 int player2Sum = 0;
 bool player2ACE = false;
 
+bool changeDetect = false;
+
 typedef struct game_state_message {
   int state;
   int id;
@@ -59,13 +61,14 @@ typedef struct game_state_message {
 typedef struct dealer_message {
   char message[32]; //message
   int player_state;  //state number 0 = init , 1=bet , 2 = playing, 3 = waiting
-  int player1_result; //result number 0 = lose, 1 = win, 2 = draw
-  int player2_result; //result number 0 = lose, 1 = win, 2 = draw
+  int player1_result; //result number 0 = lose, 1 = win, 2 = draw, 3 = card sent
+  int player2_result; //result number 0 = lose, 1 = win, 2 = draw, 3 = card sent
   int player1_card[5];
   int player2_card[5];
   int dealer_card[5];
   int FromWho; //if 0 = Dealer, 1 = Coin master 
   int DepositCredit;
+  int ForWho;
 } dealer_message;
 
 game_state_message gameStateMessage;
@@ -78,6 +81,8 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&gameStateMessage, incomingData, sizeof(gameStateMessage));
+
+  changeDetect = true;
 
   if (gameStateMessage.state == 0) {
     if (gameStateMessage.id == 1) {
@@ -122,6 +127,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 
 void SendStateToPlayer1() {
   dealerMessage.player_state = currentState;
+  dealerMessage.ForWho = 1;
   esp_err_t result1 = esp_now_send(broadcastAddress1, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
   while(result1 != ESP_OK)
   {
@@ -132,6 +138,7 @@ void SendStateToPlayer1() {
 
 void SendStateToPlayer2() {
   dealerMessage.player_state = currentState;
+  dealerMessage.ForWho = 2;
   esp_err_t result2 = esp_now_send(broadcastAddress2, (uint8_t *) &dealerMessage, sizeof(dealerMessage));
   while(result2 != ESP_OK)
   {
@@ -391,8 +398,11 @@ void handlePlayerBetState() {
 
 void handlePlayerPlayState() {
   DealerCardDisplay();
-  SendStateToPlayer1();
-  SendStateToPlayer2();
+  if (changeDetect) {
+    SendStateToPlayer1();
+    SendStateToPlayer2();
+    changeDetect = false;
+  }
   if (player1_stand && player2_stand) {
     for(int i=0; i<5; i++) {
       if(dealerMessage.player1_card[i] > 10) {
