@@ -41,6 +41,9 @@ volatile bool isCounter = false;
 volatile int count = 0;
 volatile int coinToDispense = 0;
 volatile int coinremaining = 0;
+int coin_balance;
+unsigned long last_time = 0;
+unsigned long period = 150;
 
 esp_now_peer_info_t peerInfo;
 
@@ -176,14 +179,15 @@ void loop() {
   if (isCounter) {
     isCounter = false;
     count++;
-    if (count > 1) {
+    if (count > 1 && millis() - last_time <= period) {
       Serial.println("tringger leaw krabb");
       SendCoinSignal();
       NormalStateDisplay();
       delay(1000);
       count = 0;
     }
-  
+    last_time = millis(); // timestamp
+
   }
   if (withdrawState == false) {
     NormalStateDisplay();
