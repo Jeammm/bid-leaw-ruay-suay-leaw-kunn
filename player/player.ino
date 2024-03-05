@@ -110,7 +110,7 @@ void InitDisplay(){
   display.setTextColor(WHITE);
 
   display.setCursor(0,12);
-  display.println("Credit: ");
+  display.println("Credit");
   display.print(MyCredit);
   display.println(" C");
 
