@@ -210,4 +210,5 @@ Blackjack Machine ประกอบไปด้วยเครื่องท�
 - Resistor 10k \[จำนวน 2 ตัว]
 - Power Bank \[จำนวน 3 ตัว]
 
-**Github** :[ bid-laew–ruay-suay-laew-kunn](https://github.com/Jeammm/bid-leaw-ruay-suay-leaw-kunn)
+**Github** :[ bid-laew–ruay-suay-laew-kunn](https://github.com/Jeammm/bid-leaw-ruay-suay-leaw-kunn)  
+**Youtube** :[ บิดแล้วรวย... ซวยแล้วคุณ](https://www.youtube.com/watch?v=K43_0yFJ1xQ)
